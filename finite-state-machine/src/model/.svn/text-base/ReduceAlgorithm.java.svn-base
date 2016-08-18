@@ -1,0 +1,242 @@
+package modelo;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
+import utilities.Print;
+
+public class ReduceAlgorithm {
+
+	public static String partitionString;
+
+	public static Automata reduce(Automata automata) {
+
+		// Asignar un identificador consecutivo a los estados
+		setConsecutiveNumberToNodes(automata.nodes);
+
+		// Copiando los nodos
+		ArrayList<Node> nodes = new ArrayList<Node>();
+		for (int i = 0; i < automata.nodes.size(); i++)
+			nodes.add((Node) automata.nodes.get(i).clone());
+
+		// Copiando las aristas
+		HashSet<Edge> edges = new HashSet<Edge>();
+		for (Edge edge : automata.edges) {
+			Edge edgeClone = edge.clone(nodes.get(edge.tail.consecutive), nodes.get(edge.head.consecutive));
+			edges.add(edgeClone);
+			nodes.get(edge.tail.consecutive).outgoingEdges.add(edgeClone);
+			nodes.get(edge.head.consecutive).incomingEdges.add(edgeClone);
+		}
+
+		// Obteniendo el diccionario
+		Object[] dictionary = getDictionary(edges);
+
+		// Construyendo la tabla de transiciones
+		Node[][] transitions = getTransitions(nodes, edges, dictionary);
+
+		// Creando las particiones iniciales
+		int groupId = 0;
+		LinkedList<Partition> partitions = new LinkedList<Partition>();
+		Partition otherStates = new Partition(groupId++);
+		Partition finalStates = new Partition(groupId++);
+
+		for (Node node : nodes) {
+			if(node.acceptor)
+				finalStates.add(node);
+			else
+				otherStates.add(node);
+		}
+
+		// Agregando las particiones iniciales
+		partitions.add(otherStates);
+		partitions.add(finalStates);
+
+		// Asignando los identificadores iniciales por particion a cada nodo
+		for (Partition partition : partitions)
+			partition.setIdToNodes();
+
+		// Print partitions
+		printPartitions(partitions);
+
+		// Minimizando el automata
+		boolean changes = true;
+		while(changes) {
+
+			// Inciando sin cambios
+			changes = false;
+
+			// Creando una lista temporal de nuevas particiones
+			LinkedList<Partition> newGroups = new LinkedList<Partition>();
+
+			// Iterando sobre las particiones pasadas
+			for (int g = 0; g < partitions.size();) {
+				ArrayList<Node> list = partitions.get(g).getList();
+
+				// Cuando hay elementos en la particion
+				if(list.size() > 0) {
+
+					// Si la particion solo tiene un elemento se avanza
+					if(list.size() == 1) {
+						g ++;
+					}
+
+					// Sino se analiza que elementos corresponden
+					else {
+
+						// Se inicia la lista comparadora de correspondencias
+						ArrayList<NodePointer> nodePointerList = new ArrayList<NodePointer>();
+						for (Node node : list) {
+							String pointer = generatePointerElement(node, transitions[node.consecutive]);
+							nodePointerList.add(new NodePointer(node, pointer));
+//							Print.print("El nodo "+node+" tiene un apuntador: "+pointer);
+						}
+
+						// Se ordena la lista antes de usarla
+						Collections.sort(nodePointerList);
+
+						// De acuerdo a esta lista se hace la clasificacion
+						int lastIndicator = 0;
+						for (int i = 1; i < nodePointerList.size(); i++) {
+							if(!nodePointerList.get(i).pointer.equals(nodePointerList.get(i-1).pointer)) {
+								newGroups.add(startNewPartition(groupId++, nodePointerList, lastIndicator, i-1));
+//								Print.print("Nueva particion por agregar "+newGroups.peekLast());
+								lastIndicator = i;
+								changes = true;
+							}
+						}
+
+						// Agregando la ultima particion
+						newGroups.add(startNewPartition(groupId++, nodePointerList, lastIndicator, nodePointerList.size()-1));
+//						Print.print("Nueva particion por agregar "+newGroups.peekLast());
+
+						// Se borra la particion vieja
+//						Print.print("Borrando la particion "+partitions.get(g));
+						partitions.remove(g);
+					}
+
+				}
+				// Si la particion esta vacia debe ser eliminada
+				else {
+					partitions.remove(g);
+//					Print.print("Borrando una particion vacia");
+				}
+			}
+
+			// Renombrando los identificadores por particion de cada nodo
+			for (Partition partition : newGroups)
+				partition.setIdToNodes();
+
+			// Agregando los nuevos grupos
+//			Print.print("Numero de particiones por agregar: "+newGroups.size());
+			if(newGroups.size() > 0)
+				partitions.addAll(newGroups);
+
+			// Print partitions
+			printPartitions(partitions);
+
+		}
+
+		// Generando el nuevo automata
+		return getAutomataFromPartitions(partitions);
+	}
+
+	private static void setConsecutiveNumberToNodes(ArrayList<Node> nodes) {
+		for (int i = 0; i < nodes.size(); i++)
+			nodes.get(i).consecutive = i;
+	}
+
+	private static Object[] getDictionary(Collection<Edge> edges) {
+
+		// Obteniendo el diccionario
+		HashSet<String> dictionary = new HashSet<String>();
+		for (Edge edge : edges) {
+			for (String word : edge.inputWordsArray)
+				dictionary.add(word);
+		}
+		Object[] dic = dictionary.toArray();
+		Arrays.sort(dic);
+
+		// Imprimiendo el resultado
+		System.out.print("Tabla de transicion\n   ");
+		for (Object string : dic)
+			System.out.print(" "+string);
+		System.out.println();
+
+		return dic;
+	}
+
+	private static Node[][] getTransitions(List<Node> nodes, Collection<Edge> edges, Object[] dictionary) {
+
+		// Obteniendo la tabla de transiciones
+		Node[][] transitions = new Node[nodes.size()][dictionary.length];
+		for (Edge edge : edges) {
+			for (String word : edge.inputWordsArray)
+				transitions[edge.tail.consecutive][Arrays.binarySearch(dictionary, word)] = edge.head;
+
+		}
+
+		// Imprimiendo el resultado
+		for (int i = 0; i < transitions.length; i++) {
+			System.out.print(nodes.get(i).name + " |");
+			for (int j = 0; j < transitions[i].length; j++)
+				System.out.print(" " + (transitions[i][j] != null ? transitions[i][j].name : " "));
+			System.out.println();
+		}
+
+		return transitions;
+	}
+
+	private static String generatePointerElement(Node node, Node[] transitions) {
+		String pointingElement = "";
+		for (Node goTo : transitions) {
+			if(goTo == null)
+				pointingElement += ".";
+			else
+				pointingElement += goTo.groupPointer;
+		}
+		return pointingElement;
+	}
+
+	private static void printPartitions(LinkedList<Partition> partitions) {
+		partitionString = "{";
+		for (Partition partition : partitions) {
+			partitionString += partition;
+		}
+		partitionString += "}";
+		//		System.out.println("P = "+partitionString);
+		Print.print(partitionString);
+	}
+
+	private static Partition startNewPartition(int groupId, ArrayList<NodePointer> list,int from, int until) {
+		Partition group = new Partition(groupId);
+		for (int i = from; i <= until; i++)
+			group.add(list.get(i).node);
+		return group;
+	}
+
+	private static Automata getAutomataFromPartitions(LinkedList<Partition> partitions) {
+
+		// Construyendo el nuevo automata
+		Automata automata = new Automata();
+		for (Partition partition : partitions) {
+			Node representative = partition.getRepresentativeNode();
+			automata.nodes.add(representative);
+			automata.edges.addAll(representative.outgoingEdges);
+		}
+
+		// Agregando las aristas al nuevo automata
+		for (Node node : automata.nodes)
+			automata.edges.addAll(node.outgoingEdges);
+
+		// Ordenando los nodos
+		Collections.sort(automata.nodes);
+
+		return automata;
+	}
+
+}

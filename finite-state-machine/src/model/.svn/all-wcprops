@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/3/trunk/Automata/src/modelo
+END
+Automata.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/6/trunk/Automata/src/modelo/Automata.java
+END
+Edge.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/5/trunk/Automata/src/modelo/Edge.java
+END
+NodePointer.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/5/trunk/Automata/src/modelo/NodePointer.java
+END
+Partition.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/3/trunk/Automata/src/modelo/Partition.java
+END
+ReduceAlgorithm.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/7/trunk/Automata/src/modelo/ReduceAlgorithm.java
+END
+Node.java
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/7/trunk/Automata/src/modelo/Node.java
+END

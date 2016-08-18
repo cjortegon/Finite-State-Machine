@@ -1,0 +1,51 @@
+package modelo;
+
+import java.util.HashSet;
+
+public class Edge {
+
+	public String[] inputWordsArray;
+	public String inputWordsString;
+	public Node head, tail;
+	public int x, y;
+
+	public Edge(String wordsSeparetedWithComa, Node tail, Node head) {
+		this.inputWordsArray = wordsSeparetedWithComa.split(",");
+		this.inputWordsString = wordsSeparetedWithComa;
+		this.head = head;
+		this.tail = tail;
+	}
+
+	public void setInputWords(String wordsSeparetedWithComa) {
+		this.inputWordsArray = wordsSeparetedWithComa.split(",");
+		getInputWords();
+	}
+
+	private String getInputWords() {
+		inputWordsString = "";
+		for (int i = 0; i < inputWordsArray.length; i++) {
+			inputWordsString += inputWordsArray[i];
+			if(i != inputWordsArray.length-1)
+				inputWordsString += ",";
+		}
+		return inputWordsString;
+	}
+
+	public void mergeInputWords(String otherWords[]) {
+
+		HashSet<String> words = new HashSet<String>();
+		for (String word : inputWordsArray)
+			words.add(word);
+		for (String word : otherWords)
+			words.add(word);
+
+		inputWordsArray = words.toArray(new String[0]);
+		getInputWords();
+
+	}
+	
+	public Edge clone(Node tail, Node head) {
+		return new Edge(inputWordsString+"", tail, head);
+	}
+
+}
