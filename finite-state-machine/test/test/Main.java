@@ -56,8 +56,8 @@ public class Main {
 		fsm.addEdge(new Edge("a", nodes[5], nodes[2]));fsm.addEdge(new Edge("b", nodes[5], nodes[1]));
 
 		System.out.println("\n *** Example 0 ***\n");
-		FSM FSMReducido = ReduceAlgorithm.reduce(fsm);
-		System.out.println("\n *** Result ***\n\nP(final) = "+fsm.partitionString+"\n");
+		FSM FSMReducido = fsm.reduce();
+		System.out.println("\n *** Result ***\n\nP(final) = "+FSMReducido.partitionString+"\n");
 		FSMReducido.printTranslateTable();
 		printEdges(FSMReducido.edges, FSMReducido.nodes);
 

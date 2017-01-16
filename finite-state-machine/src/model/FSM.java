@@ -48,7 +48,7 @@ public class FSM {
 	public FSM reduce() {
 
 		FSM reduced = ReduceAlgorithm.reduce(this);
-		this.partitionString = ReduceAlgorithm.partitionString;
+		reduced.partitionString = ReduceAlgorithm.partitionString;
 
 		return reduced;
 
